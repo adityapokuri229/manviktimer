@@ -25,35 +25,38 @@
         /* Valentine Popup Styles */
         #valentine-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 5, 8, 0.95);
+            background: rgba(15, 5, 8, 0.98);
             display: flex; justify-content: center; align-items: center;
-            z-index: 9999; backdrop-filter: blur(15px);
+            z-index: 9999; backdrop-filter: blur(20px);
             transition: 0.5s ease;
         }
 
         .val-card {
             background: rgba(255, 133, 162, 0.1);
             border: 1px solid var(--accent-pink);
-            padding: 40px; border-radius: 30px;
-            text-align: center; max-width: 400px; width: 90%;
-            box-shadow: 0 0 30px rgba(255, 133, 162, 0.3);
+            padding: 50px 40px; border-radius: 40px;
+            text-align: center; max-width: 450px; width: 90%;
+            box-shadow: 0 0 50px rgba(255, 133, 162, 0.2);
         }
 
-        .val-card h2 { font-size: 2rem; margin-bottom: 25px; color: white; }
+        .val-card h2 { font-size: 2.2rem; margin-bottom: 35px; color: white; font-weight: 600; }
         
-        .val-btns { display: flex; justify-content: center; gap: 20px; margin-top: 30px; position: relative; height: 50px; }
+        /* Fixed: Buttons sit side-by-side initially */
+        .val-btns { display: flex; justify-content: center; gap: 25px; margin-top: 30px; position: relative; min-height: 60px; align-items: center; }
         
         #yes-btn {
             background: var(--accent-pink); color: black;
-            border: none; padding: 12px 30px; border-radius: 15px;
-            font-family: 'Outfit'; font-weight: 600; cursor: pointer; font-size: 1.1rem;
+            border: none; padding: 14px 40px; border-radius: 18px;
+            font-family: 'Outfit'; font-weight: 600; cursor: pointer; font-size: 1.2rem;
+            transition: 0.3s;
         }
+        #yes-btn:hover { transform: scale(1.05); background: white; }
 
         #no-btn {
             background: transparent; color: white;
-            border: 1px solid white; padding: 12px 30px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.4); padding: 14px 40px; border-radius: 18px;
             font-family: 'Outfit'; font-weight: 600; cursor: pointer;
-            position: absolute; transition: 0.1s;
+            transition: 0.1s ease;
         }
 
         /* Rest of UI */
@@ -69,8 +72,9 @@
         .status-dot { position: fixed; top: 25px; right: 25px; width: 12px; height: 12px; background: var(--online-green); border-radius: 50%; box-shadow: 0 0 15px var(--online-green); opacity: 0; transition: 0.8s; z-index: 100; }
         .status-dot.active { opacity: 1; }
 
+        /* Music UI */
         #music-trigger { position: fixed; top: 20px; left: 20px; font-size: 1.5rem; cursor: pointer; z-index: 2000; background: rgba(255,133,162,0.15); padding: 12px; border-radius: 50%; border: 1px solid var(--accent-pink); display: none; box-shadow: 0 0 15px rgba(255, 133, 162, 0.3); animation: pulseMusic 2s infinite ease-in-out; }
-        @keyframes pulseMusic { 0% { transform: scale(1); } 50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 133, 162, 0.5); } 100% { transform: scale(1); } }
+        @keyframes pulseMusic { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         
         #music-panel { position: fixed; top: 85px; left: 20px; width: 320px; background: rgba(20, 10, 15, 0.92); border: 1px solid rgba(255, 133, 162, 0.4); border-radius: 25px; padding: 25px; backdrop-filter: blur(25px); z-index: 2001; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
         #music-panel input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-pink); border-radius: 12px; color: white; padding: 12px; box-sizing: border-box; margin-bottom: 20px; outline: none; font-family: 'Outfit'; }
@@ -107,7 +111,7 @@
     <div id="music-trigger" onclick="toggleMusicPanel()">🎵</div>
     <div id="music-panel">
         <div style="font-size: 1rem; margin-bottom: 15px; font-weight: 600; text-align: center; color: var(--accent-pink);">Shared Session</div>
-        <input type="text" id="stream-url" placeholder="Paste YouTube link...">
+        <input type="text" id="stream-url" placeholder="Paste YouTube URL / Enter Song Name...">
         <div style="display: flex;">
             <button class="m-btn" onclick="startStream()">Stream</button>
             <button class="m-btn end" onclick="terminateSession()">End Session</button>
@@ -116,7 +120,7 @@
             <div id="unlock-overlay" onclick="unlockAudio()">🔊 Tap to Join Music</div>
             <div id="yt-player"></div>
         </div>
-        <div id="song-info" style="font-size: 0.75rem; margin-top: 15px; color: var(--accent-pink); text-align: center; opacity: 0.6;">Sync System: Active</div>
+        <div id="song-info" style="font-size: 0.75rem; margin-top: 15px; color: var(--accent-pink); text-align: center; opacity: 0.6;">Direct Search & Hard-Sync Ready</div>
     </div>
 
     <div class="grid-container"><div class="grid-plane"></div></div>
@@ -163,11 +167,13 @@
         // --- VALENTINE LOGIC ---
         function moveNoButton() {
             const btn = document.getElementById('no-btn');
-            const x = Math.random() * (window.innerWidth - btn.offsetWidth);
-            const y = Math.random() * (window.innerHeight - btn.offsetHeight);
-            
-            // Move outside the original button container for better "dodging"
+            // Change to fixed only when interaction starts to prevent starting overlap
             btn.style.position = 'fixed';
+            
+            const padding = 20;
+            const x = Math.random() * (window.innerWidth - btn.offsetWidth - padding);
+            const y = Math.random() * (window.innerHeight - btn.offsetHeight - padding);
+            
             btn.style.left = x + 'px';
             btn.style.top = y + 'px';
         }
@@ -177,10 +183,9 @@
             overlay.style.opacity = '0';
             setTimeout(() => overlay.style.display = 'none', 500);
             
-            // Celebration!
             confetti({
-                particleCount: 300,
-                spread: 100,
+                particleCount: 400,
+                spread: 120,
                 origin: { y: 0.6 },
                 colors: ['#ff85a2', '#ffffff', '#ff4d4d']
             });
@@ -219,15 +224,22 @@
             db.ref('stream').on('value', (snap) => {
                 const data = snap.val();
                 if (!data) return;
-                if (data.videoId !== currentId) {
-                    player.loadVideoById({ videoId: data.videoId, startSeconds: calculateSyncTime(data) });
-                    currentId = data.videoId;
+
+                if (data.type === 'id') {
+                    if (data.videoId !== currentId) {
+                        player.loadVideoById({ videoId: data.videoId, startSeconds: calculateSyncTime(data) });
+                        currentId = data.videoId;
+                    }
+                } else if (data.type === 'search') {
+                    if (data.query !== currentId) {
+                        player.loadPlaylist({ list: data.query, listType: 'search' });
+                        currentId = data.query;
+                    }
                 }
+
                 if (data.state === 'playing') {
-                    const target = calculateSyncTime(data);
-                    if (Math.abs(player.getCurrentTime() - target) > 2.0) player.seekTo(target, true);
                     if (isUnlocked) player.playVideo();
-                } else { player.pauseVideo(); player.seekTo(data.time, true); }
+                } else { player.pauseVideo(); }
             });
         }
 
@@ -245,7 +257,7 @@
             document.getElementById('unlock-overlay').style.display = "none";
             db.ref('stream').once('value', (s) => {
                 const d = s.val();
-                if (d && d.state === 'playing') { player.seekTo(calculateSyncTime(d), true); player.playVideo(); }
+                if (d && d.state === 'playing') player.playVideo();
             });
         }
 
@@ -255,15 +267,19 @@
         }
 
         function startStream() {
-            const url = document.getElementById('stream-url').value;
+            const val = document.getElementById('stream-url').value.trim();
+            if (!val) return;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
+            const match = val.match(regExp);
             const id = (match && match[2].length === 11) ? match[2] : null;
+
             if (id) {
-                db.ref('stream').set({ videoId: id, state: 'playing', time: 0, timestamp: Date.now() });
-                document.getElementById('stream-url').value = "";
-                if (!isUnlocked) unlockAudio();
+                db.ref('stream').set({ type: 'id', videoId: id, state: 'playing', time: 0, timestamp: Date.now() });
+            } else {
+                db.ref('stream').set({ type: 'search', query: val, state: 'playing', time: 0, timestamp: Date.now() });
             }
+            document.getElementById('stream-url').value = "";
+            if (!isUnlocked) unlockAudio();
         }
 
         function terminateSession() {
@@ -271,7 +287,7 @@
             db.ref('music_active').set(false);
         }
 
-        // --- TYPING & UI ---
+        // --- UI & TYPING ENGINE ---
         const input = document.getElementById('input-box');
         const typingIndicator = document.getElementById('typing-indicator');
         const myTypingRef = db.ref('typing').push();
@@ -301,12 +317,12 @@
                 let msg = raw;
                 if (cmd.includes("time together")) {
                     const now = new Date();
-                    let years = now.getFullYear() - startTime.getFullYear();
-                    let months = now.getMonth() - startTime.getMonth();
-                    let days = now.getDate() - startTime.getDate();
-                    if (days < 0) { months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
-                    if (months < 0) { years--; months += 12; }
-                    msg = `✨ ${years}y ${months}mo ${days}d ${now.getHours().toString().padStart(2,'0')}h ${now.getMinutes().toString().padStart(2,'0')}m ${now.getSeconds().toString().padStart(2,'0')}s ✨`;
+                    let y = now.getFullYear() - startTime.getFullYear();
+                    let m = now.getMonth() - startTime.getMonth();
+                    let d = now.getDate() - startTime.getDate();
+                    if (d < 0) { m--; d += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+                    if (m < 0) { y--; m += 12; }
+                    msg = `✨ ${y}y ${m}mo ${d}d ${now.getHours().toString().padStart(2,'0')}h ${now.getMinutes().toString().padStart(2,'0')}m ${now.getSeconds().toString().padStart(2,'0')}s ✨`;
                 }
                 if (cmd.includes("love")) db.ref('actions').push({ type: 'confetti', timestamp: Date.now() });
                 db.ref('messages').push({ text: msg, x: Math.random() * 0.6 + 0.2, y: Math.random() * 0.4 + 0.3, timestamp: Date.now() });
